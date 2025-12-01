@@ -24,21 +24,75 @@ jobs:
     
     - name: Download ZIP file
       run: |
+        ZIP_URL=""
         if [ -n "${{ github.event.inputs.zip_url }}" ]; then
-          curl -L -o project.zip "${{ github.event.inputs.zip_url }}"
+          ZIP_URL="${{ github.event.inputs.zip_url }}"
         elif [ -n "${{ github.event.client_payload.zip_url }}" ]; then
-          curl -L -o project.zip "${{ github.event.client_payload.zip_url }}"
+          ZIP_URL="${{ github.event.client_payload.zip_url }}"
         fi
+        
+        if [ -z "$ZIP_URL" ]; then
+          echo "❌ Fehler: Keine ZIP-URL angegeben!"
+          exit 1
+        fi
+        
+        echo "📥 Lade Datei von: $ZIP_URL"
+        curl -L -f -o project.zip "$ZIP_URL" || {
+          echo "❌ Fehler beim Herunterladen"
+          exit 1
+        }
+        
+        # Prüfe ob Datei existiert und nicht leer ist
+        if [ ! -f project.zip ] || [ ! -s project.zip ]; then
+          echo "❌ Fehler: Datei wurde nicht heruntergeladen oder ist leer"
+          exit 1
+        fi
+        
+        # Prüfe ob es eine ZIP-Datei ist (beginnt mit "PK")
+        FILE_TYPE=$(file -b project.zip)
+        FIRST_BYTES=$(head -c 2 project.zip | od -An -tx1 | tr -d ' \n')
+        
+        echo "📊 Dateigröße: $(ls -lh project.zip | awk '{print $5}')"
+        echo "📋 Dateityp: $FILE_TYPE"
+        echo "🔍 Erste Bytes: $FIRST_BYTES"
+        
+        if [ "$FIRST_BYTES" != "504b" ]; then
+          echo "❌ Fehler: Datei ist keine gültige ZIP-Datei!"
+          echo "Die Datei beginnt nicht mit 'PK' (ZIP-Signatur)"
+          echo "Möglicherweise wurde eine HTML-Seite statt der ZIP-Datei heruntergeladen."
+          echo "Bitte überprüfe die URL und stelle sicher, dass sie direkt auf eine ZIP-Datei zeigt."
+          head -n 20 project.zip
+          exit 1
+        fi
+        
+        echo "✅ ZIP-Datei erfolgreich validiert"
     
     - name: Extract ZIP
       run: |
-        unzip -q project.zip -d project/
-        cd project/
-        # Finde das Hauptverzeichnis
-        if [ -d "$(ls -d */ | head -1)" ]; then
-          mv "$(ls -d */ | head -1)"* .
-          rmdir "$(ls -d */ | head -1)"
+        echo "📦 Extrahiere ZIP-Datei..."
+        if ! unzip -q project.zip -d project/; then
+          echo "❌ Fehler beim Extrahieren der ZIP-Datei"
+          echo "Die ZIP-Datei könnte beschädigt sein."
+          exit 1
         fi
+        
+        cd project/
+        
+        # Finde das Hauptverzeichnis (wenn ZIP einen Wrapper-Ordner enthält)
+        DIR_COUNT=$(ls -d */ 2>/dev/null | wc -l)
+        FILE_COUNT=$(ls -1 2>/dev/null | grep -v '^\.' | wc -l)
+        
+        if [ "$DIR_COUNT" -eq 1 ] && [ "$FILE_COUNT" -eq 1 ]; then
+          SUBDIR=$(ls -d */ | head -1)
+          echo "📁 Verschiebe Inhalt aus $SUBDIR..."
+          mv "$SUBDIR"* . 2>/dev/null || true
+          rmdir "$SUBDIR" 2>/dev/null || true
+        fi
+        
+        cd ..
+        echo "✅ Extraktion abgeschlossen"
+        echo "📁 Inhalt:"
+        ls -la project/ | head -20
     
     - name: Setup npm cache (if lock file exists)
       working-directory: ./project
