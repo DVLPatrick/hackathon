@@ -1,0 +1,95 @@
+name: Build and Deploy Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip_url:
+        description: 'URL zur ZIP-Datei'
+        required: true
+  repository_dispatch:
+    types: [build-project]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Download ZIP file
+      run: |
+        if [ -n "${{ github.event.inputs.zip_url }}" ]; then
+          curl -L -o project.zip "${{ github.event.inputs.zip_url }}"
+        elif [ -n "${{ github.event.client_payload.zip_url }}" ]; then
+          curl -L -o project.zip "${{ github.event.client_payload.zip_url }}"
+        fi
+    
+    - name: Extract ZIP
+      run: |
+        unzip -q project.zip -d project/
+        cd project/
+        # Finde das Hauptverzeichnis
+        if [ -d "$(ls -d */ | head -1)" ]; then
+          mv "$(ls -d */ | head -1)"* .
+          rmdir "$(ls -d */ | head -1)"
+        fi
+    
+    - name: Install dependencies
+      working-directory: ./project
+      run: |
+        if [ -f package.json ]; then
+          npm ci || npm install
+        fi
+    
+    - name: Build project
+      working-directory: ./project
+      run: |
+        if [ -f package.json ]; then
+          npm run build || npm run build:prod || echo "No build script found"
+        fi
+    
+    - name: Create compiled ZIP
+      run: |
+        cd project
+        # Finde den Build-Ordner
+        if [ -d "dist" ]; then
+          cd dist
+        elif [ -d "build" ]; then
+          cd build
+        elif [ -d "out" ]; then
+          cd out
+        fi
+        zip -r ../../compiled-project.zip .
+        cd ../..
+    
+    - name: Upload compiled ZIP as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-project
+        path: compiled-project.zip
+        retention-days: 7
+    
+    - name: Create Release
+      if: github.event_name == 'workflow_dispatch'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: compiled-project.zip
+        tag_name: compiled-v${{ github.run_number }}
+        name: Compiled Project v${{ github.run_number }}
+        body: |
+          Automatisch kompilierte Version des Projekts
+          
+          **Build-Datum:** ${{ github.event.head_commit.timestamp || github.run_started_at }}
+          **Commit:** ${{ github.sha }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
