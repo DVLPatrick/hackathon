@@ -21,7 +21,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
     
     - name: Download ZIP file
       run: |
@@ -41,11 +40,24 @@ jobs:
           rmdir "$(ls -d */ | head -1)"
         fi
     
+    - name: Setup npm cache (if lock file exists)
+      working-directory: ./project
+      run: |
+        if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ] || [ -f yarn.lock ]; then
+          echo "Lock file found, cache will be used"
+        else
+          echo "No lock file found, skipping cache"
+        fi
+    
     - name: Install dependencies
       working-directory: ./project
       run: |
         if [ -f package.json ]; then
-          npm ci || npm install
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
         fi
     
     - name: Build project
@@ -92,3 +104,4 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
