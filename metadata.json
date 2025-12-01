@@ -1,0 +1,7 @@
+{
+  "name": "Fiffys Welt",
+  "description": "Eine personalisierte App für Fiffy, um seine Kleidung und Spielsachen zu organisieren.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
