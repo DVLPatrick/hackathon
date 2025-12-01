@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Erlaubt das Erstellen von Releases
     
     steps:
     - name: Checkout repository
