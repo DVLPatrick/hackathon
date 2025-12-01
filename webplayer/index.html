@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google AI Studio Webplayer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Google AI Studio Webplayer</h1>
+            <p>Lade deine exportierten ZIP-Dateien hoch und probiere sie direkt aus</p>
+        </header>
+
+        <main>
+            <div id="upload-section" class="upload-section">
+                <div class="upload-tabs">
+                    <button class="tab-btn active" onclick="switchTab('upload')">📤 Datei hochladen</button>
+                    <button class="tab-btn" onclick="switchTab('github')">🐙 GitHub kompilieren</button>
+                </div>
+                
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="upload-area">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h2>ZIP-Datei hier ablegen</h2>
+                        <p>oder klicke zum Auswählen</p>
+                        <input type="file" id="file-input" accept=".zip" hidden>
+                        <button class="btn-primary" onclick="document.getElementById('file-input').click()">
+                            Datei auswählen
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="github-tab" class="tab-content">
+                    <div class="github-section">
+                        <h3>GitHub Repository kompilieren</h3>
+                        <p>Lade ein GitHub Repository hoch und kompiliere es automatisch</p>
+                        <div class="input-group">
+                            <label for="github-repo">Repository URL oder ZIP-Download-URL:</label>
+                            <input type="text" id="github-repo" placeholder="https://github.com/user/repo oder https://github.com/user/repo/archive/refs/heads/main.zip">
+                            <button class="btn-primary" onclick="processGitHubRepo()">Kompilieren</button>
+                        </div>
+                        <div class="github-info">
+                            <p><strong>Hinweis:</strong> Du musst die GitHub Actions in deinem Repository aktivieren.</p>
+                            <p>Die kompilierte Version wird als Release erstellt.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading-section" class="loading-section hidden">
+                <div class="spinner"></div>
+                <p>Datei wird verarbeitet...</p>
+            </div>
+
+            <div id="error-section" class="error-section hidden">
+                <div class="error-box">
+                    <h3>❌ Fehler</h3>
+                    <p id="error-message"></p>
+                    <button class="btn-secondary" onclick="resetUpload()">Erneut versuchen</button>
+                </div>
+            </div>
+
+            <div id="player-section" class="player-section hidden">
+                <div class="player-header">
+                    <h2 id="app-title">Anwendung</h2>
+                    <div class="player-controls">
+                        <button class="btn-secondary" onclick="resetUpload()">Neue Datei laden</button>
+                        <button class="btn-secondary" onclick="toggleFullscreen()">Vollbild</button>
+                    </div>
+                </div>
+                <div class="player-content">
+                    <iframe id="app-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                </div>
+                <div class="file-explorer">
+                    <h3>Dateien</h3>
+                    <div id="file-tree" class="file-tree"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+

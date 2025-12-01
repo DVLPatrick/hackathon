@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Apprentigo Hackathon - App Manager</title>
+        <link rel="stylesheet" href="/index.css">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Apprentigo Hackathon - App Manager</h1>
+            </header>
+            
+            <div class="main-content">
+                <aside class="sidebar">
+                    <section class="upload-section">
+                        <h2>App hochladen</h2>
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <input type="file" id="appFile" name="appFile" accept=".zip" required>
+                            <input type="text" id="appName" name="appName" placeholder="App-Name" required>
+                            <button type="submit">Hochladen</button>
+                        </form>
+                        <div id="uploadStatus"></div>
+                    </section>
+                    
+                    <section class="apps-section">
+                        <h2>Apps</h2>
+                        <div id="appsList"></div>
+                    </section>
+                </aside>
+                
+                <main class="app-viewer">
+                    <div class="iphone-container">
+                        <div class="iphone-frame">
+                            <div class="iphone-notch"></div>
+                            <div class="iphone-screen">
+                                <div id="appFrameContainer">
+                                    <iframe id="appFrame" src="" frameborder="0"></iframe>
+                                    <div id="noAppSelected" class="placeholder">
+                                        <p>Wähle eine App aus, um sie anzuzeigen</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="iphone-home-indicator"></div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        
+        <script src="/index.js"></script>
+    </body>
+</html>
